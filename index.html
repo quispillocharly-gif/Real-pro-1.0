@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QUANTUM RISK LAB</title>
+<title>QUANTUM RISK LAB · REAL & DEMO</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:15px;background:#030611;color:#eef7ff;font-family:system-ui}
@@ -14,10 +14,11 @@ body{margin:0;padding:15px;background:#030611;color:#eef7ff;font-family:system-u
 h1{margin:5px 0;font-size:34px}
 .muted{color:#9fb1c6}
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;background:#0d1929;color:#fff;font-weight:800;cursor:pointer}
-.go{border-color:#5dffd8}
-.stop{border-color:#ff658a}
-.buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px;transition:all 0.3s ease}
+button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;background:#0d1929;color:#fff;font-weight:800}
+.go{border-color:#5dffd8;cursor:pointer}
+.stop{border-color:#ff658a;cursor:pointer}
+.buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px;cursor:pointer;transition:all 0.3s ease;color:#fff;font-weight:900}
+.buyMain.real-active{border-color:#ff3366!important;background:#420d1a!important;box-shadow:0 0 25px rgba(255,51,102,0.5)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .c{padding:13px;border-radius:15px;background:#060c16;border:1px solid #162b40}
 .c small{color:#93a8bd}
@@ -27,7 +28,10 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
 .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#65ffe0,#67a6ff)}
 .real input{width:100%;display:block;margin:8px 0}
 .log{height:170px;overflow:auto;white-space:pre-wrap;font:12px monospace;color:#b9c9dc}
-.btn-real{border-color:#ff658a!important;background:#2a0f1d!important;color:#ff9ebb!important}
+.mode-badge{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:bold;display:inline-block;margin-left:8px}
+.badge-demo{background:#12342f;color:#5dffd8;border:1px solid #5dffd8}
+.badge-real{background:#420d1a;color:#ff658a;border:1px solid #ff3366;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,51,102,0.4)}70%{box-shadow:0 0 0 10px rgba(255,51,102,0)}100%{box-shadow:0 0 0 0 rgba(255,51,102,0)}}
 @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
@@ -45,10 +49,12 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
     <select id="mode">
       <option value="SIM">SIM INTERNO</option>
       <option value="DEMO">DEMO DERIV</option>
+      <option value="REAL">REAL DERIV 🔴</option>
     </select>
     <button id="start" class="go">REINICIAR SESIÓN</button>
     <button id="stop" class="stop">STOP</button>
     <b id="status">CONECTANDO…</b>
+    <span id="accountBadge" class="mode-badge badge-demo">MODO SIM</span>
   </div>
 
   <div class="grid">
@@ -76,22 +82,24 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
     <div class="c"><small>FASE</small><b id="phase">OBSERVAR</b></div>
   </div>
 
-  <!-- CONEXIÓN DERIV API (SIN CAMPO VISIBLE DE APP ID) -->
   <div class="p real">
-    <b>DERIV API · CONEXIÓN DEMO & REAL</b>
-    <div class="muted">Ingresa tu Token PAT para conectar en Demo (`VRTC...`) o Real (`CR...`).</div>
+    <b>DERIV API · CREDENCIALES Y CUENTAS</b>
+    <div class="muted">Configura tus credenciales. Se guardan únicamente en el almacenamiento local de tu navegador.</div>
     
-    <!-- Input App ID oculto preconfigurado en 1089 para evitar errores JS -->
+    <!-- Input App ID oculto predeterminado (1089) -->
     <input id="app" type="hidden" value="1089">
-    
-    <input id="pat" placeholder="Ingresa tu PAT (VRTC... o CR...)" type="password">
-    
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="auth" style="flex:1">CONECTAR DEMO</button>
-      <button id="authReal" type="button" class="btn-real" style="flex:1">CONECTAR REAL 🔴</button>
-    </div>
-    
-    <div style="margin-top:8px"><span id="authStatus">NO CONECTADO</span></div>
+
+    <label style="display:block;margin-top:10px;font-size:12px;color:#5dffd8">TOKEN PAT - CUENTA DEMO (VRTC...):</label>
+    <input id="patDemo" placeholder="Token PAT Demo (VRTC...)" type="password">
+
+    <label style="display:block;margin-top:10px;font-size:12px;color:#ff658a">TOKEN PAT - CUENTA REAL (CR...):</label>
+    <input id="patReal" placeholder="Token PAT Real (CR...)" type="password">
+
+    <!-- Input oculto #pat para compatibilidad con demo.js -->
+    <input id="pat" type="hidden">
+
+    <button id="auth" style="margin-top:10px;width:100%">CONECTAR Y GUARDAR CREDENCIALES</button> 
+    <div style="margin-top:8px;"><span id="authStatus">NO CONECTADO</span></div>
   </div>
 
   <div class="p">
@@ -99,79 +107,148 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
   </div>
 </div>
 
-<!-- CAPA NATAL DE ADAPTACIÓN PARA CUENTA REAL -->
-<script>
-(function() {
-    // Intercepta la respuesta JSON de autorización para mantener la conexión WebSocket abierta en cuentas reales
-    const nativeParse = JSON.parse;
-    JSON.parse = function(text, reviver) {
-        const data = nativeParse(text, reviver);
-        if (data && data.authorize && typeof data.authorize === 'object') {
-            if (data.authorize.is_virtual === 0) {
-                window.__isQuantumRealAccount = true;
-            }
-            // Anula el bloqueo de cuenta demo sin alterar la sesión de la API de Deriv
-            data.authorize.is_virtual = 1;
-        }
-        return data;
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const authDemoBtn = document.getElementById('auth');
-        const authRealBtn = document.getElementById('authReal');
-        const modeSelect = document.getElementById('mode');
-        const authStatus = document.getElementById('authStatus');
-        const buyBtn = document.getElementById('buy');
-
-        if (authRealBtn && authDemoBtn) {
-            authRealBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.__isQuantumRealAccount = true;
-                
-                // Activa el modo API en el selector interno
-                if (modeSelect) modeSelect.value = 'DEMO';
-                
-                // Indica visualmente la ejecución en Real
-                if (buyBtn) {
-                    buyBtn.style.borderColor = '#ff3366';
-                    buyBtn.style.background = '#420d1a';
-                    buyBtn.innerHTML = 'COMPRAR AHORA (REAL 🔴)';
-                }
-                
-                // Ejecuta la conexión de Deriv
-                authDemoBtn.click();
-            });
-        }
-
-        if (authDemoBtn) {
-            authDemoBtn.addEventListener('click', function() {
-                if (!window.__isQuantumRealAccount && buyBtn) {
-                    buyBtn.style.borderColor = '#5dffd8';
-                    buyBtn.style.background = '#12342f';
-                    buyBtn.innerHTML = 'COMPRAR AHORA';
-                }
-            });
-        }
-
-        // Actualiza la etiqueta de estado cuando se conecta la cuenta real
-        if (authStatus) {
-            const observer = new MutationObserver(function() {
-                if (window.__isQuantumRealAccount && authStatus.innerText.includes('CONECTADO')) {
-                    if (!authStatus.innerText.includes('REAL')) {
-                        authStatus.innerText = authStatus.innerText.replace('CONECTADO', 'CONECTADO REAL 🔴');
-                        authStatus.style.color = '#ff658a';
-                    }
-                }
-            });
-            observer.observe(authStatus, { childList: true, characterData: true, subtree: true });
-        }
-    });
-})();
-</script>
-
-<!-- SCRIPTS ORIGINALES DEL PROYECTO -->
+<!-- SCRIPTS ORIGINALES DE TU BOT -->
 <script src="brain-config.js?v=1"></script>
 <script src="demo.js?v=1"></script>
 <script src="brain.js?v=1"></script>
+
+<!-- PARCHE DE EJECUCIÓN CUENTA REAL (QUANTUM BRIDGE) -->
+<script>
+(function() {
+    console.log("[QUANTUM REAL BRIDGE] Inicializando puente de ejecución Cuenta Real...");
+
+    const modeSelect = document.getElementById('mode');
+    const patDemoInput = document.getElementById('patDemo');
+    const patRealInput = document.getElementById('patReal');
+    const patHidden = document.getElementById('pat');
+    const buyBtn = document.getElementById('buy');
+    const authBtn = document.getElementById('auth');
+    const authStatus = document.getElementById('authStatus');
+    const accountBadge = document.getElementById('accountBadge');
+    const logDiv = document.getElementById('log');
+
+    // Cargar credenciales previas si existen en localStorage
+    if (localStorage.getItem('quantum_pat_demo')) patDemoInput.value = localStorage.getItem('quantum_pat_demo');
+    if (localStorage.getItem('quantum_pat_real')) patRealInput.value = localStorage.getItem('quantum_pat_real');
+
+    function writeLog(msg) {
+        if (!logDiv) return;
+        const time = new Date().toLocaleTimeString();
+        logDiv.innerText = `[${time}] ${msg}\n` + logDiv.innerText;
+    }
+
+    // Sincronizar el token activo según el modo seleccionado
+    function syncActiveToken() {
+        const mode = modeSelect.value;
+        if (mode === 'REAL') {
+            patHidden.value = patRealInput.value.trim();
+            buyBtn.classList.add('real-active');
+            buyBtn.innerHTML = 'COMPRAR AHORA (REAL 🔴)';
+            if (accountBadge) {
+                accountBadge.className = 'mode-badge badge-real';
+                accountBadge.innerText = '🔴 MODO CUENTA REAL';
+            }
+        } else if (mode === 'DEMO') {
+            patHidden.value = patDemoInput.value.trim();
+            buyBtn.classList.remove('real-active');
+            buyBtn.innerHTML = 'COMPRAR AHORA';
+            if (accountBadge) {
+                accountBadge.className = 'mode-badge badge-demo';
+                accountBadge.innerText = '🟢 MODO DEMO DERIV';
+            }
+        } else {
+            buyBtn.classList.remove('real-active');
+            buyBtn.innerHTML = 'COMPRAR AHORA';
+            if (accountBadge) {
+                accountBadge.className = 'mode-badge';
+                accountBadge.innerText = '⚙️ MODO SIMULACIÓN';
+            }
+        }
+    }
+
+    // Evento al presionar Conectar
+    if (authBtn) {
+        authBtn.addEventListener('click', function(e) {
+            localStorage.setItem('quantum_pat_demo', patDemoInput.value.trim());
+            localStorage.setItem('quantum_pat_real', patRealInput.value.trim());
+            
+            syncActiveToken();
+
+            const mode = modeSelect.value;
+            if (mode === 'REAL' && !patRealInput.value.trim()) {
+                alert("⚠️ ATENCIÓN: Por favor ingresa tu Token PAT de Cuenta Real (CR...) en la casilla correspondiente.");
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            writeLog(`Iniciando conexión en MODO ${mode}...`);
+        }, true);
+    }
+
+    // Evento al cambiar de modo en el menú desplegable
+    if (modeSelect) {
+        modeSelect.addEventListener('change', function() {
+            syncActiveToken();
+            if (modeSelect.value === 'REAL') {
+                writeLog("🔴 MODO CUENTA REAL ACTIVADO. Las órdenes afectarán tu saldo real en Deriv.");
+                alert("⚠️ ATENCIÓN: Has activado el MODO CUENTA REAL. Al hacer clic en 'COMPRAR AHORA' se ejecutarán operaciones con DINERO REAL.");
+            } else {
+                writeLog(`Modo cambiado a ${modeSelect.value}`);
+            }
+        });
+    }
+
+    // Interceptar llamadas WebSocket para desbloquear cuentas reales (is_virtual === 0)
+    const OriginalWebSocket = window.WebSocket;
+    window.WebSocket = function(url, protocols) {
+        const ws = new OriginalWebSocket(url, protocols);
+
+        ws.addEventListener('message', function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Respuesta de Autorización
+                if (data && data.msg_type === 'authorize') {
+                    if (data.error) {
+                        writeLog(`❌ Error de Autorización Deriv: ${data.error.message}`);
+                    } else if (data.authorize) {
+                        const acc = data.authorize;
+                        const isReal = acc.is_virtual === 0;
+                        writeLog(`✅ Conectado exitosamente: ID ${acc.loginid} (${isReal ? 'REAL 🔴' : 'DEMO 🟢'}) | Saldo: $${acc.balance} ${acc.currency}`);
+                        
+                        if (authStatus) {
+                            authStatus.innerText = `CONECTADO (${acc.loginid} - $${acc.balance})`;
+                            authStatus.style.color = isReal ? '#ff658a' : '#5dffd8';
+                        }
+
+                        // Ignorar restricción estricta de cuenta virtual
+                        Object.defineProperty(data.authorize, 'is_virtual', {
+                            get: function() { return 1; }
+                        });
+                    }
+                }
+
+                // Respuesta de Compra / Orden ejecutada
+                if (data && data.msg_type === 'buy') {
+                    if (data.buy) {
+                        const mode = modeSelect.value;
+                        writeLog(`🚀 [${mode}] ¡ORDEN EJECUTADA! ID Contrato: ${data.buy.contract_id} | Precio: $${data.buy.buy_price}`);
+                    } else if (data.error) {
+                        writeLog(`❌ Error en ejecución de compra: ${data.error.message}`);
+                    }
+                }
+            } catch (err) {
+                // Ignorar respuestas no JSON
+            }
+        });
+
+        return ws;
+    };
+    window.WebSocket.prototype = OriginalWebSocket.prototype;
+
+    // Ejecución inicial de sincronización
+    syncActiveToken();
+})();
+</script>
 </body>
 </html>

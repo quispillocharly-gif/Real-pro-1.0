@@ -83,22 +83,22 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
   </div>
 
   <div class="p real">
-    <b>DERIV API · CREDENCIALES Y CUENTAS</b>
-    <div class="muted">Configura tus credenciales. Se guardan únicamente en el almacenamiento local de tu navegador.</div>
+    <b>DERIV API · CREDENCIALES PAT</b>
+    <div class="muted">Ingresa tus tokens PAT. Se guardan únicamente en el almacenamiento de tu navegador.</div>
     
-    <label style="display:block;margin-top:10px;font-size:12px;color:#9fb1c6">APP ID DE DERIV:</label>
-    <input id="app" placeholder="Ejemplo: 1089 (o tu App ID personal)" inputmode="numeric">
+    <!-- Input App ID oculto predeterminado (1089) para compatibilidad con demo.js -->
+    <input id="app" type="hidden" value="1089">
 
-    <label style="display:block;margin-top:10px;font-size:12px;color:#5dffd8">TOKEN PAT - CUENTA DEMO (VRTC...):</label>
+    <label style="display:block;margin-top:12px;font-size:12px;color:#5dffd8">TOKEN PAT - CUENTA DEMO (VRTC...):</label>
     <input id="patDemo" placeholder="Token PAT Demo (VRTC...)" type="password">
 
-    <label style="display:block;margin-top:10px;font-size:12px;color:#ff658a">TOKEN PAT - CUENTA REAL (CR...):</label>
+    <label style="display:block;margin-top:12px;font-size:12px;color:#ff658a">TOKEN PAT - CUENTA REAL (CR...):</label>
     <input id="patReal" placeholder="Token PAT Real (CR...)" type="password">
 
-    <!-- Input oculto #pat mantenido para compatibilidad con demo.js -->
+    <!-- Input oculto #pat para paso de credencial activa -->
     <input id="pat" type="hidden">
 
-    <button id="auth" style="margin-top:10px;width:100%">CONECTAR Y GUARDAR CREDENCIALES</button> 
+    <button id="auth" style="margin-top:12px;width:100%">CONECTAR Y GUARDAR CREDENCIALES</button> 
     <div style="margin-top:8px;"><span id="authStatus">NO CONECTADO</span></div>
   </div>
 
@@ -107,15 +107,15 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
   </div>
 </div>
 
-<!-- SCRIPTS ORIGINALES DE TU BOT -->
+<!-- SCRIPTS ORIGINALES DEL BOT -->
 <script src="brain-config.js?v=1"></script>
 <script src="demo.js?v=1"></script>
 <script src="brain.js?v=1"></script>
 
-<!-- PARCHE DE EJECUCIÓN CUENTA REAL (QUANTUM BRIDGE) -->
+<!-- PARCHE DE EJECUCIÓN CUENTA REAL -->
 <script>
 (function() {
-    console.log("[QUANTUM REAL BRIDGE] Inicializando puente de ejecución Cuenta Real...");
+    console.log("[QUANTUM REAL BRIDGE] Inicializando puente de ejecución de cuenta Real...");
 
     const modeSelect = document.getElementById('mode');
     const appInput = document.getElementById('app');
@@ -129,7 +129,6 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
     const logDiv = document.getElementById('log');
 
     // Cargar credenciales previas si existen en localStorage
-    if (localStorage.getItem('quantum_app_id')) appInput.value = localStorage.getItem('quantum_app_id');
     if (localStorage.getItem('quantum_pat_demo')) patDemoInput.value = localStorage.getItem('quantum_pat_demo');
     if (localStorage.getItem('quantum_pat_real')) patRealInput.value = localStorage.getItem('quantum_pat_real');
 
@@ -171,7 +170,6 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
     // Evento al presionar Conectar
     if (authBtn) {
         authBtn.addEventListener('click', function(e) {
-            localStorage.setItem('quantum_app_id', appInput.value.trim());
             localStorage.setItem('quantum_pat_demo', patDemoInput.value.trim());
             localStorage.setItem('quantum_pat_real', patRealInput.value.trim());
             
@@ -179,7 +177,7 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
 
             const mode = modeSelect.value;
             if (mode === 'REAL' && !patRealInput.value.trim()) {
-                alert("⚠️ ATENCIÓN: Por favor ingresa tu Token PAT de Cuenta Real (CR...) en la casilla correspondiente.");
+                alert("⚠️ ATENCIÓN: Ingresa tu Token PAT de Cuenta Real (CR...) para operar en real.");
                 e.stopImmediatePropagation();
                 return false;
             }
@@ -193,15 +191,15 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
         modeSelect.addEventListener('change', function() {
             syncActiveToken();
             if (modeSelect.value === 'REAL') {
-                writeLog("🔴 MODO CUENTA REAL ACTIVADO. Las órdenes afectarán tu saldo real en Deriv.");
-                alert("⚠️ ATENCIÓN: Has activado el MODO CUENTA REAL. Al hacer clic en 'COMPRAR AHORA' se ejecutarán operaciones con DINERO REAL.");
+                writeLog("🔴 MODO CUENTA REAL ACTIVADO. Las órdenes se ejecutarán en tu saldo real de Deriv.");
+                alert("⚠️ ATENCIÓN: Has seleccionado MODO CUENTA REAL. Al presionar 'COMPRAR AHORA' se operará dinero real.");
             } else {
                 writeLog(`Modo cambiado a ${modeSelect.value}`);
             }
         });
     }
 
-    // Interceptar llamadas WebSocket para desbloquear cuentas reales (is_virtual === 0)
+    // Interceptar llamadas WebSocket para desbloquear cuentas reales
     const OriginalWebSocket = window.WebSocket;
     window.WebSocket = function(url, protocols) {
         const ws = new OriginalWebSocket(url, protocols);
@@ -224,14 +222,14 @@ button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;bac
                             authStatus.style.color = isReal ? '#ff658a' : '#5dffd8';
                         }
 
-                        // Ignorar restricción estricta de cuenta virtual si existe en scripts internos
+                        // Ignorar restricción estricta de cuenta virtual
                         Object.defineProperty(data.authorize, 'is_virtual', {
                             get: function() { return 1; }
                         });
                     }
                 }
 
-                // Respuesta de Compra / Orden ejecutada
+                // Respuesta de Compra
                 if (data && data.msg_type === 'buy') {
                     if (data.buy) {
                         const mode = modeSelect.value;

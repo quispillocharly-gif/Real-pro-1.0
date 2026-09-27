@@ -1,55 +1,130 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QUANTUM RISK LAB</title><style>*{box-sizing:border-box}body{margin:0;padding:15px;background:#030611;color:#eef7ff;font-family:system-ui}.w{max-width:950px;margin:auto}.hero,.p{background:#09111f;border:1px solid #315b85;border-radius:20px;padding:16px;margin:10px 0}.hero{background:linear-gradient(135deg,#071a31,#15102f);box-shadow:0 0 35px #2458a533}.tag{font-size:11px;letter-spacing:3px;color:#6fffe1}h1{margin:5px 0;font-size:34px}.muted{color:#9fb1c6}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;background:#0d1929;color:#fff;font-weight:800;cursor:pointer}.go{border-color:#5dffd8}.stop{border-color:#ff658a}.buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px}.btn-real{border-color:#ff658a!important;background:#2a0f1d!important;color:#ff9ebb!important}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.c{padding:13px;border-radius:15px;background:#060c16;border:1px solid #162b40}.c small{color:#93a8bd}.c b{display:block;font-size:24px;color:#71ffe1;margin-top:4px}.brain{font-size:19px;font-weight:900}.meter{height:9px;background:#111d2b;border-radius:9px;overflow:hidden;margin-top:10px}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#65ffe0,#67a6ff)}.real input{width:100%;display:block;margin:8px 0}.log{height:170px;overflow:auto;white-space:pre-wrap;font:12px monospace;color:#b9c9dc}@media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}</style></head><body><div class="w"><div class="hero"><div class="tag">RESEARCH BUILD · PROYECTO NUEVO</div><h1>QUANTUM RISK LAB</h1><div class="muted">Detector estadístico de riesgo MATCH · DIFFER 1 tick · meta neta +$3</div></div><div class="p controls"><label>STAKE BASE $ <input id="baseStake" type="number" min="0.01" step="0.01" value="1.00" style="width:92px"></label><label>META STOP $ <input id="targetInput" type="number" min="0.01" step="0.01" value="3.00" style="width:92px"></label><select id="mode"><option value="SIM">SIM INTERNO</option><option value="DEMO">DEMO DERIV</option></select><button id="start" class="go">REINICIAR SESIÓN</button><button id="stop" class="stop">STOP</button><b id="status">CONECTANDO…</b></div><div class="grid"><div class="c"><small>PNL</small><b id="pnl">+$0.00</b></div><div class="c"><small>STAKE</small><b id="stake">$1.00</b></div><div class="c"><small>WIN</small><b id="wins">0</b></div><div class="c"><small>MATCH</small><b id="losses">0</b></div><div class="c"><small>OPS</small><b id="ops">0</b></div><div class="c"><small>META</small><b id="targetView">+$3.00</b></div><div class="c"><small>TICK</small><b id="tick">—</b></div><div class="c"><small>DIFFER</small><b id="pick">—</b></div></div><div class="p"><div class="brain" id="decision">CALIBRANDO</div><div class="muted" id="reason">Recolectando historial estadístico.</div><div class="meter"><i id="meter"></i></div><button id="buy" class="buyMain">COMPRAR AHORA</button></div><div class="grid"><div class="c"><small>RIESGO INTERNO</small><b id="risk">—</b></div><div class="c"><small>SEPARACIÓN</small><b id="spread">—</b></div><div class="c"><small>ENTROPÍA</small><b id="entropy">—</b></div><div class="c"><small>FASE</small><b id="phase">OBSERVAR</b></div></div><div class="p real"><b>DERIV API · APP ID + PAT</b><div class="muted">Credenciales solo en tu navegador. Ingresa tu App ID y tu PAT para conectar en Demo o Real.</div><input id="app" placeholder="App ID" inputmode="numeric"><input id="pat" placeholder="PAT (Demo o Real)" type="password"><div style="display:flex;gap:8px;margin-top:6px"><button id="auth" style="flex:1">CONECTAR DEMO</button><button id="authReal" class="btn-real" style="flex:1">CONECTAR REAL 🔴</button></div><div style="margin-top:8px"><span id="authStatus">NO CONECTADO</span></div></div><div class="p"><div class="log" id="log"></div></div></div><script src="brain-config.js?v=1"></script><script src="demo.js?v=1"></script><script src="brain.js?v=1"></script>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QUANTUM RISK LAB</title><style>*{box-sizing:border-box}body{margin:0;padding:15px;background:#030611;color:#eef7ff;font-family:system-ui}.w{max-width:950px;margin:auto}.hero,.p{background:#09111f;border:1px solid #315b85;border-radius:20px;padding:16px;margin:10px 0}.hero{background:linear-gradient(135deg,#071a31,#15102f);box-shadow:0 0 35px #2458a533}.tag{font-size:11px;letter-spacing:3px;color:#6fffe1}h1{margin:5px 0;font-size:34px}.muted{color:#9fb1c6}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;background:#0d1929;color:#fff;font-weight:800;cursor:pointer}.go{border-color:#5dffd8}.stop{border-color:#ff658a}.buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px;transition:all 0.3s ease}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.c{padding:13px;border-radius:15px;background:#060c16;border:1px solid #162b40}.c small{color:#93a8bd}.c b{display:block;font-size:24px;color:#71ffe1;margin-top:4px}.brain{font-size:19px;font-weight:900}.meter{height:9px;background:#111d2b;border-radius:9px;overflow:hidden;margin-top:10px}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#65ffe0,#67a6ff)}.real input{width:100%;display:block;margin:8px 0}.btn-real{border-color:#ff658a!important;background:#2a0f1d!important;color:#ff9ebb!important}.log{height:170px;overflow:auto;white-space:pre-wrap;font:12px monospace;color:#b9c9dc}@media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}</style></head><body><div class="w"><div class="hero"><div class="tag">RESEARCH BUILD · PROYECTO NUEVO</div><h1>QUANTUM RISK LAB</h1><div class="muted">Detector estadístico de riesgo MATCH · DIFFER 1 tick · meta neta +$3</div></div><div class="p controls"><label>STAKE BASE $ <input id="baseStake" type="number" min="0.01" step="0.01" value="1.00" style="width:92px"></label><label>META STOP $ <input id="targetInput" type="number" min="0.01" step="0.01" value="3.00" style="width:92px"></label><select id="mode"><option value="SIM">SIM INTERNO</option><option value="DEMO">DEMO DERIV</option></select><button id="start" class="go">REINICIAR SESIÓN</button><button id="stop" class="stop">STOP</button><b id="status">CONECTANDO…</b></div><div class="grid"><div class="c"><small>PNL</small><b id="pnl">+$0.00</b></div><div class="c"><small>STAKE</small><b id="stake">$1.00</b></div><div class="c"><small>WIN</small><b id="wins">0</b></div><div class="c"><small>MATCH</small><b id="losses">0</b></div><div class="c"><small>OPS</small><b id="ops">0</b></div><div class="c"><small>META</small><b id="targetView">+$3.00</b></div><div class="c"><small>TICK</small><b id="tick">—</b></div><div class="c"><small>DIFFER</small><b id="pick">—</b></div></div><div class="p"><div class="brain" id="decision">CALIBRANDO</div><div class="muted" id="reason">Recolectando historial estadístico.</div><div class="meter"><i id="meter"></i></div><button id="buy" class="buyMain">COMPRAR AHORA</button></div><div class="grid"><div class="c"><small>RIESGO INTERNO</small><b id="risk">—</b></div><div class="c"><small>SEPARACIÓN</small><b id="spread">—</b></div><div class="c"><small>ENTROPÍA</small><b id="entropy">—</b></div><div class="c"><small>FASE</small><b id="phase">OBSERVAR</b></div></div>
 
-<!-- Conector transparente para habilitar compras en Cuenta Real -->
+<!-- APARTADO DE CONEXIÓN DEMO / REAL (SIN CAMPO DE APP ID) -->
+<div class="p real">
+  <b>DERIV API · CONEXIÓN DEMO & REAL</b>
+  <div class="muted">Credenciales solo en tu navegador. Ingresa tu PAT para conectar a Demo o Real.</div>
+  
+  <input id="app" type="hidden" value="1089">
+  
+  <label style="display:block;margin-top:10px;font-size:12px;color:#5dffd8">TOKEN PAT - DEMO (VRTC...):</label>
+  <input id="patDemo" placeholder="PAT Demo" type="password">
+  
+  <label style="display:block;margin-top:10px;font-size:12px;color:#ff658a">TOKEN PAT - REAL (CR...):</label>
+  <input id="patReal" placeholder="PAT Real" type="password">
+  
+  <input id="pat" type="hidden">
+
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button id="btnConnectDemo" style="flex:1">CONECTAR DEMO</button>
+    <button id="btnConnectReal" class="btn-real" style="flex:1">CONECTAR REAL 🔴</button>
+  </div>
+  
+  <button id="auth" style="display:none">CONECTAR</button>
+  
+  <div style="margin-top:8px"><span id="authStatus">NO CONECTADO</span></div>
+</div>
+
+<div class="p"><div class="log" id="log"></div></div></div>
+
+<!-- INTERCEPTOR DE VALIDACIÓN DE CUENTA -->
 <script>
 (function() {
-    const origWS = window.WebSocket;
-    let isRealMode = false;
-
-    window.WebSocket = function(url, protocols) {
-        const ws = new origWS(url, protocols);
-        ws.addEventListener('message', function(e) {
-            try {
-                const data = JSON.parse(e.data);
-                if (data && data.authorize) {
-                    // Omite la restricción para aceptar cuentas reales
-                    Object.defineProperty(data.authorize, 'is_virtual', { get: function() { return 1; } });
-                    
-                    if (isRealMode) {
-                        setTimeout(() => {
-                            const statusEl = document.getElementById('authStatus');
-                            if (statusEl) {
-                                statusEl.innerText = 'CONECTADO REAL 🔴 (' + (data.authorize.loginid || '') + ')';
-                                statusEl.style.color = '#ff658a';
-                            }
-                        }, 100);
-                    }
-                }
-            } catch(err) {}
-        });
-        return ws;
+    // Intercepta la respuesta del WebSocket antes de que demo.js la procese
+    const origParse = JSON.parse;
+    JSON.parse = function(text, reviver) {
+        const res = origParse(text, reviver);
+        if (res && res.authorize && typeof res.authorize === 'object') {
+            if (res.authorize.is_virtual === 0) {
+                window.__isQuantumRealAccount = true;
+            }
+            // Forzar a demo.js a tratar la cuenta como autorizada para ejecutar órdenes
+            res.authorize.is_virtual = 1;
+        }
+        return res;
     };
-    window.WebSocket.prototype = origWS.prototype;
+})();
+</script>
 
-    const btnReal = document.getElementById('authReal');
-    const btnDemo = document.getElementById('auth');
-    const selectMode = document.getElementById('mode');
+<!-- SCRIPTS ORIGINALES DEL BOT -->
+<script src="brain-config.js?v=1"></script>
+<script src="demo.js?v=1"></script>
+<script src="brain.js?v=1"></script>
 
-    if (btnReal && btnDemo) {
-        btnReal.addEventListener('click', function() {
-            isRealMode = true;
-            if (selectMode) selectMode.value = 'DEMO'; // Activa el motor de ejecución
-            btnDemo.click(); // Ejecuta la conexión interna
+<!-- LÓGICA DE SELECCIÓN DE CUENTA -->
+<script>
+(function() {
+    const patDemo = document.getElementById('patDemo');
+    const patReal = document.getElementById('patReal');
+    const patHidden = document.getElementById('pat');
+    const appHidden = document.getElementById('app');
+    const authOrig = document.getElementById('auth');
+    const modeSelect = document.getElementById('mode');
+    const btnDemo = document.getElementById('btnConnectDemo');
+    const btnReal = document.getElementById('btnConnectReal');
+    const authStatus = document.getElementById('authStatus');
+    const buyBtn = document.getElementById('buy');
+
+    // Recuperar credenciales si estaban guardadas
+    if (localStorage.getItem('quantum_pat_demo')) patDemo.value = localStorage.getItem('quantum_pat_demo');
+    if (localStorage.getItem('quantum_pat_real')) patReal.value = localStorage.getItem('quantum_pat_real');
+
+    // Conectar a DEMO
+    if (btnDemo) {
+        btnDemo.addEventListener('click', function() {
+            window.__isQuantumRealAccount = false;
+            const token = patDemo.value.trim();
+            if (!token) {
+                alert("Ingresa tu Token PAT de Cuenta Demo (VRTC...)");
+                return;
+            }
+            localStorage.setItem('quantum_pat_demo', token);
+            patHidden.value = token;
+            appHidden.value = "1089";
+            if (modeSelect) modeSelect.value = "DEMO";
+            
+            if (buyBtn) {
+                buyBtn.style.borderColor = "#5dffd8";
+                buyBtn.style.background = "#12342f";
+                buyBtn.innerText = "COMPRAR AHORA";
+            }
+            
+            authOrig.click();
         });
     }
 
-    if (btnDemo) {
-        btnDemo.addEventListener('click', function() {
-            if (!isRealMode) {
-                const statusEl = document.getElementById('authStatus');
-                if (statusEl) statusEl.style.color = '';
+    // Conectar a REAL
+    if (btnReal) {
+        btnReal.addEventListener('click', function() {
+            const token = patReal.value.trim();
+            if (!token) {
+                alert("Ingresa tu Token PAT de Cuenta Real (CR...)");
+                return;
+            }
+            localStorage.setItem('quantum_pat_real', token);
+            patHidden.value = token;
+            appHidden.value = "1089";
+            if (modeSelect) modeSelect.value = "DEMO"; // Necesario para que demo.js procese las compras
+            
+            if (buyBtn) {
+                buyBtn.style.borderColor = "#ff3366";
+                buyBtn.style.background = "#420d1a";
+                buyBtn.innerText = "COMPRAR AHORA (REAL 🔴)";
+            }
+            
+            authOrig.click();
+        });
+    }
+
+    // Etiqueta visual de estado
+    if (authStatus) {
+        const observer = new MutationObserver(function() {
+            if (window.__isQuantumRealAccount && !authStatus.innerText.includes('REAL')) {
+                authStatus.innerText = authStatus.innerText.replace('CONECTADO', 'CONECTADO REAL 🔴');
+                authStatus.style.color = '#ff658a';
             }
         });
+        observer.observe(authStatus, { childList: true, characterData: true, subtree: true });
     }
 })();
 </script>

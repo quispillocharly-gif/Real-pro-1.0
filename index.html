@@ -22,12 +22,13 @@
     .c{padding:13px;border-radius:15px;background:#060c16;border:1px solid #162b40}
     .c small{color:#93a8bd}
     .c b{display:block;font-size:24px;color:#71ffe1;margin-top:4px}
+    .c.balance-card b{color:#5dffd8}
     .brain{font-size:19px;font-weight:900}
     .meter{height:9px;background:#111d2b;border-radius:9px;overflow:hidden;margin-top:10px}
     .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#65ffe0,#67a6ff)}
     .real input{width:100%;display:block;margin:8px 0}
     .log{height:170px;overflow:auto;white-space:pre-wrap;font:12px monospace;color:#b9c9dc}
-    @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}
+    @media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
   </style>
 </head>
 <body>
@@ -42,7 +43,6 @@
       <label>STAKE BASE $ <input id="baseStake" type="number" min="0.01" step="0.01" value="1.00" style="width:92px"></label>
       <label>META STOP $ <input id="targetInput" type="number" min="0.01" step="0.01" value="3.00" style="width:92px"></label>
       
-      <!-- HABILITADO MODO REAL AQUÍ -->
       <select id="mode">
         <option value="SIM">SIM INTERNO</option>
         <option value="DEMO">DEMO DERIV</option>
@@ -55,6 +55,8 @@
     </div>
 
     <div class="grid">
+      <!-- CASILLA DE SALDO DE CUENTA -->
+      <div class="c balance-card"><small>SALDO CUENTA</small><b id="balance">$0.00</b></div>
       <div class="c"><small>PNL</small><b id="pnl">+$0.00</b></div>
       <div class="c"><small>STAKE</small><b id="stake">$1.00</b></div>
       <div class="c"><small>WIN</small><b id="wins">0</b></div>
@@ -79,10 +81,9 @@
       <div class="c"><small>FASE</small><b id="phase">OBSERVAR</b></div>
     </div>
 
-    <!-- SECCIÓN DE CONEXIÓN ACTUALIZADA PARA ACEPTAR TOKEN REAL -->
     <div class="p real">
-      <b>DERIV (DEMO / REAL) · APP ID + PAT</b>
-      <div class="muted">Credenciales solo en tu navegador. Selecciona la opción DEMO o REAL en el selector superior.</div>
+      <b>CONEXIÓN DERIV (DEMO / REAL) · APP ID + PAT</b>
+      <div class="muted">Credenciales solo en tu navegador. Selecciona el entorno en el menú desplegable.</div>
       <input id="app" placeholder="App ID" inputmode="numeric">
       <input id="pat" placeholder="PAT (API Token)" type="password">
       <button id="auth">CONECTAR Y AUTENTICAR</button> <span id="authStatus">NO CONECTADO</span>

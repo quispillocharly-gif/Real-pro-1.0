@@ -5,6 +5,7 @@ const baseStake=()=>Math.max(.01,Number(cfg().baseStake)||1);
 const target=()=>Math.max(.01,Number(cfg().target)||3);
 function log(s){$('log').textContent=s+'\n'+$('log').textContent}
 function ent(a){let c=Array(10).fill(0);a.forEach(x=>c[x]++);let h=0;c.forEach(v=>{if(v){let p=v/a.length;h-=p*Math.log2(p)}});return h}
+
 function analyse(){
  if(hist.length<180)return null;
  let last=hist[hist.length-1],w12=hist.slice(-12),w36=hist.slice(-36),w120=hist.slice(-120),f12=Array(10).fill(0),f36=Array(10).fill(0),f120=Array(10).fill(0),tr=Array(10).fill(0);
@@ -25,6 +26,7 @@ function analyse(){
  let safe=q.risk<maxRisk&&spread>=need&&q.p12<=.10&&q.pt<=.13;
  return{q,spread,H,near,safe};
 }
+
 function showSignal(s){
  lastSignal=s;
  if(!s){$('decision').textContent='OBSERVANDO';$('reason').textContent='Aún no existe suficiente historial.';$('buy').textContent='COMPRAR AHORA · CALIBRANDO';return}
@@ -34,22 +36,35 @@ function showSignal(s){
  if(!s.safe){$('decision').textContent='NO OPERAR';$('reason').textContent='La separación estadística no supera el filtro de seguridad.'}
  else{$('decision').textContent='SEÑAL D'+s.q.d;$('reason').textContent='Candidato de menor riesgo interno; entrada habilitada.'}
 }
+
 function ui(d){
  if(d!==undefined)$('tick').textContent='D'+d;
  $('pnl').textContent=(pnl>=0?'+':'')+'$'+pnl.toFixed(2);$('stake').textContent='$'+stake.toFixed(2);$('wins').textContent=wins;$('losses').textContent=losses;$('ops').textContent=ops;$('pick').textContent=lastPick===null?'—':'D'+lastPick;
 }
+
 function enter(s){
  if(!running||pending||!s)return;
  let d=s.q.d,mode=$('mode').value;
- if(mode==='DEMO'&&!window.demoReady){$('status').textContent='CONECTA DEMO DERIV';return}
+ if((mode==='DEMO'||mode==='REAL')&&!window.demoReady){
+  $('status').textContent='CONECTA DERIV PRIMERO';return;
+ }
+ if((mode==='DEMO'||mode==='REAL')&&window.currentAccountType!==mode.toLowerCase()){
+  $('status').textContent='RECONECTA EN MODO '+mode;return;
+ }
  lastPick=d;observe=0;pending={d,stake,mode};ops++;
  $('decision').textContent='COMPRA '+mode+' · DIFFER D'+d;$('reason').textContent='$'+stake.toFixed(2)+' · duración 1 tick';log('COMPRA '+mode+' D'+d+' $'+stake.toFixed(2));ui();
- if(mode==='DEMO'){ $('status').textContent='ENVIANDO A DERIV…'; window.sendDemoTrade(d,stake).catch(e=>tradeError(e));}
- else $('status').textContent='SIM ABIERTA';
+ if(mode==='DEMO'||mode==='REAL'){
+  $('status').textContent='ENVIANDO A DERIV…';
+  window.sendDemoTrade(d,stake).catch(e=>tradeError(e));
+ } else {
+  $('status').textContent='SIM ABIERTA';
+ }
 }
+
 function tradeError(e){
- log('ERROR DEMO '+(e?.message||e));pending=null;observe=0;$('status').textContent='ERROR DEMO · REVISA LOG';ui();
+ log('ERROR DERIV '+(e?.message||e));pending=null;observe=0;$('status').textContent='ERROR · REVISA LOG';ui();
 }
+
 function finish(profit,label){
  profit=Number(profit);if(!Number.isFinite(profit)){tradeError(new Error('Resultado inválido'));return}
  pnl+=profit;
@@ -60,10 +75,12 @@ function finish(profit,label){
  else if(running)$('status').textContent='OBSERVANDO';
  ui();
 }
+
 function tick(d){
  if(pending&&pending.mode==='SIM'){let p=pending;finish(d===p.d?-p.stake:p.stake*.10,'SIM')}
  hist.push(d);if(hist.length>1000)hist.shift();if(running&&!pending)observe++;ui(d);showSignal(analyse());
 }
+
 function connect(){
  clearTimeout(retry);ws=new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
  ws.onopen=()=>ws.send(JSON.stringify({ticks_history:'R_75',count:300,end:'latest',style:'ticks'}));
@@ -73,12 +90,25 @@ function connect(){
  };
  ws.onclose=()=>retry=setTimeout(connect,2500);
 }
+
 $('start').onclick=()=>{
- if($('mode').value==='DEMO'&&!window.demoReady){$('status').textContent='CONECTA DEMO DERIV PRIMERO';return}
- pnl=0;stake=baseStake();wins=0;losses=0;ops=0;pending=null;observe=0;lastPick=null;running=true;$('status').textContent='ANALIZANDO';log('NUEVA SESIÓN '+$('mode').value+' · STAKE $'+stake.toFixed(2)+' · META $'+target().toFixed(2));ui();
+ let mode=$('mode').value;
+ if((mode==='DEMO'||mode==='REAL')&&!window.demoReady){
+  $('status').textContent='CONECTA DERIV PRIMERO';return;
+ }
+ pnl=0;stake=baseStake();wins=0;losses=0;ops=0;pending=null;observe=0;lastPick=null;running=true;
+ $('status').textContent='ANALIZANDO';
+ log('NUEVA SESIÓN '+mode+' · STAKE $'+stake.toFixed(2)+' · META $'+target().toFixed(2));
+ ui();
 };
 $('stop').onclick=()=>{running=false;$('status').textContent='STOP MANUAL'};
-$('buy').onclick=()=>{if(!running){$('status').textContent='PULSA REINICIAR SESIÓN';return}if(pending){$('status').textContent='OPERACIÓN EN CURSO';return}let s=analyse();if(!s){$('status').textContent='AÚN CALIBRANDO';return}enter(s)};
-window.demoSettlement=p=>finish(p,'DERIV DEMO');
+$('buy').onclick=()=>{
+ if(!running){$('status').textContent='PULSA REINICIAR SESIÓN';return}
+ if(pending){$('status').textContent='OPERACIÓN EN CURSO';return}
+ let s=analyse();if(!s){$('status').textContent='AÚN CALIBRANDO';return}
+ enter(s);
+};
+
+window.demoSettlement=p=>finish(p,'DERIV '+($('mode').value||''));
 window.demoTradeError=tradeError;
 stake=baseStake();$('status').textContent='ANÁLISIS ACTIVO';ui();connect();

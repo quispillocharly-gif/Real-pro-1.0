@@ -15,21 +15,19 @@
     .muted{color:#9fb1c6}
     .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     button,select,input{padding:12px;border-radius:11px;border:1px solid #4f83b8;background:#0d1929;color:#fff;font-weight:800}
-    .go{border-color:#5dffd8;cursor:pointer}
-    .stop{border-color:#ff658a;cursor:pointer}
-    .buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px;cursor:pointer;transition:all 0.3s ease}
-    .buyMain:disabled{opacity:0.4;cursor:not-allowed;border-color:#555;background:#1a202c}
+    .go{border-color:#5dffd8}
+    .stop{border-color:#ff658a}
+    .buyMain{width:100%;min-height:68px;font-size:22px;border:2px solid #5dffd8;background:#12342f;margin-top:6px}
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
     .c{padding:13px;border-radius:15px;background:#060c16;border:1px solid #162b40}
     .c small{color:#93a8bd}
     .c b{display:block;font-size:24px;color:#71ffe1;margin-top:4px}
-    .c.balance-card b{color:#5dffd8}
     .brain{font-size:19px;font-weight:900}
     .meter{height:9px;background:#111d2b;border-radius:9px;overflow:hidden;margin-top:10px}
     .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#65ffe0,#67a6ff)}
     .real input{width:100%;display:block;margin:8px 0}
     .log{height:170px;overflow:auto;white-space:pre-wrap;font:12px monospace;color:#b9c9dc}
-    @media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}
   </style>
 </head>
 <body>
@@ -39,24 +37,19 @@
       <h1>QUANTUM RISK LAB</h1>
       <div class="muted">Detector estadístico de riesgo MATCH · DIFFER 1 tick · meta neta +$3</div>
     </div>
-
     <div class="p controls">
       <label>STAKE BASE $ <input id="baseStake" type="number" min="0.01" step="0.01" value="1.00" style="width:92px"></label>
       <label>META STOP $ <input id="targetInput" type="number" min="0.01" step="0.01" value="3.00" style="width:92px"></label>
-      
       <select id="mode">
         <option value="SIM">SIM INTERNO</option>
         <option value="DEMO">DEMO DERIV</option>
         <option value="REAL">REAL DERIV</option>
       </select>
-      
       <button id="start" class="go">REINICIAR SESIÓN</button>
       <button id="stop" class="stop">STOP</button>
       <b id="status">CONECTANDO…</b>
     </div>
-
     <div class="grid">
-      <div class="c balance-card"><small>SALDO CUENTA</small><b id="balance">$0.00</b></div>
       <div class="c"><small>PNL</small><b id="pnl">+$0.00</b></div>
       <div class="c"><small>STAKE</small><b id="stake">$1.00</b></div>
       <div class="c"><small>WIN</small><b id="wins">0</b></div>
@@ -66,142 +59,31 @@
       <div class="c"><small>TICK</small><b id="tick">—</b></div>
       <div class="c"><small>DIFFER</small><b id="pick">—</b></div>
     </div>
-
     <div class="p">
       <div class="brain" id="decision">CALIBRANDO</div>
       <div class="muted" id="reason">Recolectando historial estadístico.</div>
       <div class="meter"><i id="meter"></i></div>
       <button id="buy" class="buyMain">COMPRAR AHORA</button>
     </div>
-
     <div class="grid">
       <div class="c"><small>RIESGO INTERNO</small><b id="risk">—</b></div>
       <div class="c"><small>SEPARACIÓN</small><b id="spread">—</b></div>
       <div class="c"><small>ENTROPÍA</small><b id="entropy">—</b></div>
       <div class="c"><small>FASE</small><b id="phase">OBSERVAR</b></div>
     </div>
-
     <div class="p real">
-      <b>CONEXIÓN DERIV (DEMO / REAL) · APP ID + PAT</b>
-      <div class="muted">Ingresa tus credenciales. Selecciona el modo arriba antes de conectar.</div>
+      <b>DERIV (DEMO / REAL) · APP ID + PAT</b>
+      <div class="muted">Credenciales solo en tu navegador. Selecciona la cuenta y conecta tus credenciales.</div>
       <input id="app" placeholder="App ID" inputmode="numeric">
-      <input id="pat" placeholder="PAT (API Token)" type="password">
-      <button id="auth">CONECTAR Y AUTENTICAR</button> <span id="authStatus">NO CONECTADO</span>
+      <input id="pat" placeholder="PAT" type="password">
+      <button id="auth">CONECTAR DERIV</button> <span id="authStatus">NO CONECTADO</span>
     </div>
-
     <div class="p">
       <div class="log" id="log"></div>
     </div>
   </div>
-
   <script src="brain-config.js?v=1"></script>
   <script src="demo.js?v=1"></script>
   <script src="brain.js?v=1"></script>
-
-  <!-- CONTROLADOR DE CONEXIÓN HABILITADO PARA MODO REAL -->
-  <script>
-    (function() {
-      let quantumWS = null;
-      let accountBalance = 0;
-
-      const logElem = document.getElementById('log');
-      const balanceElem = document.getElementById('balance');
-      const authStatusElem = document.getElementById('authStatus');
-      const modeSelect = document.getElementById('mode');
-      const authBtn = document.getElementById('auth');
-      const buyBtn = document.getElementById('buy');
-
-      function printLog(msg) {
-        const time = new Date().toLocaleTimeString();
-        logElem.textContent = `[${time}] ${msg}\n` + logElem.textContent;
-      }
-
-      function updateUIBalance(val) {
-        accountBalance = parseFloat(val) || 0;
-        balanceElem.textContent = `$${accountBalance.toFixed(2)}`;
-      }
-
-      // Conexión directa a Deriv sin bloqueos por tipo de cuenta
-      authBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const appId = document.getElementById('app').value.trim();
-        const pat = document.getElementById('pat').value.trim();
-        const selectedMode = modeSelect.value;
-
-        if (!appId || !pat) {
-          alert('Por favor ingresa tu App ID y tu Token PAT.');
-          return;
-        }
-
-        if (quantumWS) {
-          quantumWS.close();
-        }
-
-        authStatusElem.textContent = 'CONECTANDO…';
-        authStatusElem.style.color = '#fff';
-        printLog(`Iniciando conexión con App ID: ${appId} en modo [${selectedMode}]...`);
-
-        quantumWS = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${appId}`);
-
-        quantumWS.onopen = function() {
-          printLog('WebSocket conectado. Autenticando token...');
-          quantumWS.send(JSON.stringify({ authorize: pat }));
-        };
-
-        quantumWS.onmessage = function(evt) {
-          const res = JSON.parse(evt.data);
-
-          if (res.msg_type === 'authorize') {
-            if (res.error) {
-              authStatusElem.textContent = 'ERROR DE AUTENTICACIÓN';
-              authStatusElem.style.color = '#ff658a';
-              printLog(`Error: ${res.error.message}`);
-              alert(`Error al autenticar: ${res.error.message}`);
-              return;
-            }
-
-            const acc = res.authorize;
-            const isVirtual = acc.is_virtual === 1;
-            const accountType = isVirtual ? 'DEMO' : 'REAL';
-
-            // Verificación de coherencia entre el Token y el Selector
-            if (selectedMode === 'REAL' && isVirtual) {
-              printLog('ADVERTENCIA: Seleccionaste MODO REAL pero el Token ingresado pertenece a una CUENTA DEMO (VRTC).');
-              alert('ATENCIÓN: Tu Token es de una cuenta DEMO, pero tienes seleccionado Modo REAL. Cambia el Token por uno de tu cuenta REAL (CR) o selecciona DEMO en el menú.');
-            } else if (selectedMode === 'DEMO' && !isVirtual) {
-              printLog('ADVERTENCIA: Seleccionaste MODO DEMO pero el Token ingresado pertenece a una CUENTA REAL (CR).');
-            }
-
-            authStatusElem.textContent = `CONECTADO (${acc.loginid}) [${accountType}]`;
-            authStatusElem.style.color = '#5dffd8';
-            printLog(`Conexión exitosa a la cuenta ${acc.loginid} (${accountType}). Saldo inicial: $${acc.balance}`);
-
-            updateUIBalance(acc.balance);
-
-            // Suscribirse a actualizaciones de saldo en vivo
-            quantumWS.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-          }
-
-          if (res.msg_type === 'balance' && res.balance) {
-            updateUIBalance(res.balance.balance);
-          }
-        };
-
-        quantumWS.onerror = function(err) {
-          authStatusElem.textContent = 'ERROR';
-          authStatusElem.style.color = '#ff658a';
-          printLog('Error de red al conectar al servidor WebSocket de Deriv.');
-        };
-
-        quantumWS.onclose = function() {
-          authStatusElem.textContent = 'DESCONECTADO';
-          authStatusElem.style.color = '#9fb1c6';
-          printLog('Conexión finalizada.');
-        };
-      };
-    })();
-  </script>
 </body>
 </html>

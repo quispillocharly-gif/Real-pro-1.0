@@ -30,10 +30,10 @@
 
       const a=await api('/trading/v1/options/accounts',{method:'GET'});
       const rows=Array.isArray(a.data)?a.data:(a.data?[a.data]:[]);
-      
+
       const acc=rows.find(x=>String(x.account_type||'').toLowerCase()===targetMode&&String(x.status||'active').toLowerCase()==='active');
       if(!acc)throw new Error(`No encontré una cuenta Options ${targetMode.toUpperCase()} activa`);
-      
+
       accountId=acc.account_id;
       accountType=targetMode;
       currency=acc.currency||'USD';
@@ -142,7 +142,7 @@
       barrier:String(digit),
       duration:1,
       duration_unit:'t',
-      symbol:'R_75',
+      underlying_symbol:'R_75',
       req_id:++proposalReq
     }));
   });

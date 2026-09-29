@@ -52,13 +52,22 @@ function enter(s){
   $('status').textContent='RECONECTA EN MODO '+mode;return;
  }
  lastPick=d;observe=0;pending={d,stake,mode};ops++;
- $('decision').textContent='COMPRA '+mode+' · DIFFER D'+d;$('reason').textContent='$'+stake.toFixed(2)+' · duración 1 tick';log('COMPRA '+mode+' D'+d+' $'+stake.toFixed(2));ui();
+
+ // 1. EJECUCIÓN INMEDIATA DE LA ORDEN
  if(mode==='DEMO'||mode==='REAL'){
   $('status').textContent='ENVIANDO A DERIV…';
   window.sendDemoTrade(d,stake).catch(e=>tradeError(e));
  } else {
   $('status').textContent='SIM ABIERTA';
  }
+
+ // 2. ACTUALIZACIÓN VISUAL (En segundo plano)
+ setTimeout(()=>{
+  $('decision').textContent='COMPRA '+mode+' · DIFFER D'+d;
+  $('reason').textContent='$'+stake.toFixed(2)+' · duración 1 tick';
+  log('COMPRA '+mode+' D'+d+' $'+stake.toFixed(2));
+  ui();
+ },0);
 }
 
 function tradeError(e){

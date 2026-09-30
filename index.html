@@ -35,7 +35,7 @@
     <div class="hero">
       <div class="tag">RESEARCH BUILD · PROYECTO NUEVO</div>
       <h1>QUANTUM RISK LAB</h1>
-      <div class="muted">Detector estadístico de riesgo MATCH · DIFFER 1 tick · meta neta +$3</div>
+      <div class="muted">Markov + Rényi · delay 2 ticks · validación multi-horizonte · DIFFER 1 tick</div>
     </div>
     <div class="p controls">
       <label>STAKE BASE $ <input id="baseStake" type="number" min="0.01" step="0.01" value="1.00" style="width:92px"></label>
@@ -58,6 +58,7 @@
       <div class="c"><small>META</small><b id="targetView">+$3.00</b></div>
       <div class="c"><small>TICK</small><b id="tick">—</b></div>
       <div class="c"><small>DIFFER</small><b id="pick">—</b></div>
+      <div class="c"><small>CANDIDATO · SIN FILTRO DE RIESGO</small><b id="sepPick">—</b></div>
     </div>
     <div class="p">
       <div class="brain" id="decision">CALIBRANDO</div>
@@ -84,6 +85,6 @@
   </div>
   <script src="brain-config.js?v=1"></script>
   <script src="demo.js?v=fix-symbol-2"></script>
-  <script src="brain.js?v=logic-v14-delay2-plus"></script>
+  <script src="brain.js?v=logic-v15-ui-sync"></script>
 </body>
 </html>

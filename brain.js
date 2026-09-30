@@ -241,10 +241,12 @@ function showSignal(s){
   $('decision').textContent='OBSERVANDO';
   $('reason').textContent='Aún no existe suficiente historial.';
   $('buy').textContent='COMPRAR AHORA · CALIBRANDO';
+  if($('sepPick'))$('sepPick').textContent='—';
   return;
  }
  let sep=s.spread*100,riskPct=s.q.risk*100;
  $('risk').textContent=riskPct.toFixed(1)+'%';
+ if($('sepPick'))$('sepPick').textContent='D'+s.q.d;
  $('buy').textContent='COMPRAR AHORA · D'+s.q.d+' · RIESGO '+riskPct.toFixed(1)+'%';
  $('spread').textContent=sep.toFixed(1);
  $('entropy').textContent=s.H.toFixed(2);

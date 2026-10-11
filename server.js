@@ -14,10 +14,10 @@ const {getHistoricalRates}=require('dukascopy-node');
 const FEED_SOURCE='Dukascopy XAUUSD spot (bid)';let feed={status:'starting',symbol:'xauusd',updated:null,error:null},research={status:'waiting',lastRun:null,lastResult:'Esperando XAUUSD spot',source:FEED_SOURCE},researchBusy=false,fetchBusy=false;
 function freshEnough(){const last=Date.parse(db.bars.at(-1)?.t||'');return Number.isFinite(last)&&Date.now()-last<12*60*1000}
 async function refreshSpot(){if(fetchBusy)return;fetchBusy=true;feed.status='loading';try{
-const now=new Date(),from=new Date(now.getTime()-10*86400000);
-const raw=await getHistoricalRates({instrument:'xauusd',dates:{from,to:now},timeframe:'m1',format:'json',priceType:'bid',useCache:true,cacheFolderPath:'/data/dukascopy-cache',batchSize:10,pauseBetweenBatchesMs:400});
+const now=new Date(),from=new Date(now.getTime()-2*86400000);
+const raw=await getHistoricalRates({instrument:'xauusd',dates:{from,to:now},timeframe:'m1',format:'json',priceType:'bid',useCache:false,batchSize:2,pauseBetweenBatchesMs:1500});
 console.log('Dukascopy raw:',Array.isArray(raw)?raw.length:typeof raw,'range',from.toISOString(),now.toISOString());const bars=(Array.isArray(raw)?raw:[]).map(x=>({t:new Date(x.timestamp).toISOString(),o:+x.open,h:+x.high,l:+x.low,c:+x.close})).filter(x=>[x.o,x.h,x.l,x.c].every(v=>Number.isFinite(v)&&v>0)&&x.h>=Math.max(x.o,x.c)&&x.l<=Math.min(x.o,x.c)).sort((a,b)=>a.t.localeCompare(b.t));
-if(bars.length<200)throw Error('Historial spot insuficiente: '+bars.length+' velas');
+if(bars.length<100)throw Error('Dukascopy no devolvió suficientes velas M1: '+bars.length+'. No se puede validar investigación.');
 const previous=db.bars.at(-1)?.t;
 db.bars=bars.slice(-15000);db.source=FEED_SOURCE;feed.status=freshEnough()?'connected':'historical';feed.updated=new Date().toISOString();feed.error=null;research.source=FEED_SOURCE;
 if(previous!==db.bars.at(-1)?.t||!db.champion){research.status='evaluating';researchBusy=true;try{study();research.lastRun=new Date().toISOString();research.status='ready';research.lastResult=db.champion?'Estrategia evaluada con datos spot':'Sin estrategia aprobada'}finally{researchBusy=false}}
@@ -35,7 +35,7 @@ const tf='M'+document.getElementById('tf').value;
 const valid=s&&s.source===window.currentDataSource&&['BUY','SELL'].includes(s.action)&&Number.isFinite(+s.entry)&&+s.entry>0&&s.timeframe===tf;
 document.getElementById('chartFallback').style.display=a.length?'none':'block';
 document.getElementById('chartStatus').textContent=a.length?'Fuente de análisis y gráfico: '+(window.currentDataSource||'sin identificar')+' · '+a.length+' velas · '+tf+(valid?' · '+s.action+' '+s.entry:' · sin entrada activa en esta temporalidad'):'Sin datos spot disponibles; reintentando';
-if(!a.length){document.getElementById('chart').textContent='Sin velas spot verificadas; se muestra OANDA como referencia debajo.';return}
+if(!a.length){document.getElementById('chart').textContent='Fuente de datos no disponible. Consulta el error en Estado de conexión. OANDA aparece abajo como referencia.';return}
 if(!window.LightweightCharts){document.getElementById('chart').textContent='No se pudo cargar el motor del gráfico interactivo';return}
 if(!tvChart){const el=document.getElementById('chart');el.innerHTML='';el.style.height='470px';el.style.overflow='hidden';tvChart=LightweightCharts.createChart(el,{width:el.clientWidth,height:470,layout:{background:{type:'solid',color:'#071525'},textColor:'#b8cadc'},grid:{vertLines:{color:'#172c40'},horzLines:{color:'#172c40'}},rightPriceScale:{borderColor:'#345064'},timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#345064'},crosshair:{mode:0}});tvCandles=tvChart.addSeries(LightweightCharts.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350'});new ResizeObserver(()=>{if(tvChart)tvChart.applyOptions({width:el.clientWidth})}).observe(el)}
 let candles=a.map(b=>({time:Math.floor(Date.parse(b.t)/1000),open:+b.o,high:+b.h,low:+b.l,close:+b.c})).filter(b=>Number.isFinite(b.time)&&[b.open,b.high,b.low,b.close].every(Number.isFinite)).sort((x,y)=>x.time-y.time).filter((v,i,arr)=>!i||v.time!==arr[i-1].time);

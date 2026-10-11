@@ -1,0 +1,2 @@
+# XAU AI Lab
+Independent Railway deployment from branch xau-ai-lab. Daily GC=F futures proxy, not spot XAU/USD. Autonomous six-hour historical backtest. 70/30 chronological train/test split; champion only if both have positive average R and minimum trades. Research signals only, no broker execution. Persistent /data state requires Railway volume. The TradingView Pine script is separate; it is not synchronized with the server.

@@ -1,5 +1,6 @@
 //@version=6
 indicator("XAU AI Lab | Signals & Backtest", overlay=true, max_labels_count=500)
+webhookSecret=input.string("","Clave webhook Railway",group="Conexión Railway")
 fastN=input.int(12,"Media rápida",minval=2)
 slowN=input.int(50,"Media lenta",minval=3)
 atrN=input.int(14,"ATR",minval=2)
@@ -29,3 +30,10 @@ plot(tp,"Take profit",color=color.lime,style=plot.style_linebr)
 alertcondition(longSignal,"XAU BUY","XAU AI Lab BUY on {{ticker}} {{interval}}")
 alertcondition(shortSignal,"XAU SELL","XAU AI Lab SELL on {{ticker}} {{interval}}")
 // Standalone TradingView indicator. It does not read Railway's selected strategy.
+
+// Create TradingView alert using "Any alert() function call" and webhook URL.
+if barstate.isconfirmed and str.length(webhookSecret)>0
+    action=longSignal?"BUY":shortSignal?"SELL":"WAIT"
+    if longSignal or shortSignal
+        payload='{"secret":"'+webhookSecret+'","symbol":"'+syminfo.tickerid+'","interval":"'+timeframe.period+'","time":"'+str.tostring(time)+'","close":'+str.tostring(close)+',"action":"'+action+'","confirmed":true}'
+        alert(payload,alert.freq_once_per_bar_close)

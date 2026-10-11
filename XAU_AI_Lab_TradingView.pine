@@ -1,0 +1,31 @@
+//@version=6
+indicator("XAU AI Lab | Signals & Backtest", overlay=true, max_labels_count=500)
+fastN=input.int(12,"Media rápida",minval=2)
+slowN=input.int(50,"Media lenta",minval=3)
+atrN=input.int(14,"ATR",minval=2)
+risk=input.float(1.8,"Stop ATR x",minval=0.2,step=0.1)
+rr=input.float(2.0,"Take profit R",minval=0.5,step=0.25)
+confirm=input.bool(true,"Confirmar con cierre de vela")
+f=ta.sma(close,fastN)
+s=ta.sma(close,slowN)
+a=ta.atr(atrN)
+longSignal=ta.crossover(f,s) and (not confirm or barstate.isconfirmed)
+shortSignal=ta.crossunder(f,s) and (not confirm or barstate.isconfirmed)
+plot(f,"SMA rápida",color=color.aqua,linewidth=2)
+plot(s,"SMA lenta",color=color.orange,linewidth=2)
+plotshape(longSignal,title="BUY",text="BUY",style=shape.labelup,location=location.belowbar,color=color.lime,textcolor=color.black,size=size.small)
+plotshape(shortSignal,title="SELL",text="SELL",style=shape.labeldown,location=location.abovebar,color=color.red,textcolor=color.white,size=size.small)
+var float entry=na
+var float sl=na
+var float tp=na
+if longSignal or shortSignal
+    dir=longSignal?1.0:-1.0
+    entry:=close
+    sl:=entry-dir*a*risk
+    tp:=entry+dir*a*risk*rr
+plot(entry,"Entrada",color=color.yellow,style=plot.style_linebr)
+plot(sl,"Stop loss",color=color.red,style=plot.style_linebr)
+plot(tp,"Take profit",color=color.lime,style=plot.style_linebr)
+alertcondition(longSignal,"XAU BUY","XAU AI Lab BUY on {{ticker}} {{interval}}")
+alertcondition(shortSignal,"XAU SELL","XAU AI Lab SELL on {{ticker}} {{interval}}")
+// Standalone TradingView indicator. It does not read Railway's selected strategy.
